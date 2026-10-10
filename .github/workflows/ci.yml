@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.so }}
+
+    # bash nos tres sistemas: no Windows o shell padrao e o PowerShell, e ele
+    # desmonta "-Dexec.args=..." em dois argumentos antes de o Maven ver.
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        so: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Testes
+        run: mvn -B -ntp verify
+
+      - name: a centralidade contra a forca bruta
+        run: mvn -B -ntp -q exec:java -Dexec.args="definicao"
+
+      - name: o no sem saida que vaza
+        run: mvn -B -ntp -q exec:java -Dexec.args="vazamento"
+
+      - name: as tres contas contra a enumeracao literal
+        run: mvn -B -ntp -q exec:java -Dexec.args="enumeracao"
+
+      - name: quantas rodadas a iteracao precisa
+        run: mvn -B -ntp -q exec:java -Dexec.args="convergencia"
+
+      - name: a ponte do haltere
+        run: mvn -B -ntp -q exec:java -Dexec.args="haltere"
+
+      - name: o custo de cada medida
+        run: mvn -B -ntp -q exec:java -Dexec.args="custo"
+
+      - name: quem e o centro de cada forma
+        run: mvn -B -ntp -q exec:java -Dexec.args="centro"
+
+      - name: Relatorios de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-${{ matrix.so }}
+          path: target/surefire-reports
